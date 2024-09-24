@@ -1,0 +1,10 @@
+# PyPI dependencies
+matplotlib==3.9.2
+numpy==2.1.1
+pillow==10.4.0
+torch==2.4.1
+torchvision==0.19.1
+pandas==2.2.3
+
+# GitHub repository dependency
+git+https://github.com/baras1/CVClassification.git@main#egg=CVClassification
