@@ -48,10 +48,14 @@ def load_images_from_csv(csv_file, image_folder, has_labels=True):
     else:
         return torch.stack(images)  # For test dataset, just return images
 
-# Usage example:
-# For training data
-train_images, train_labels = load_images_from_csv('Training_set.csv', 'train', has_labels=True)
+def main():
+    print("Running the classification model...")
+    # Usage example:
+    # For training data
+    train_images, train_labels = load_images_from_csv('Training_set.csv', 'train', has_labels=True)
 
-# For test data (without labels)
-test_images = load_images_from_csv('Testing_set.csv', 'test', has_labels=False)
+    # For test data (without labels)
+    test_images = load_images_from_csv('Testing_set.csv', 'test', has_labels=False)
 
+if __name__ == "__main__":
+    main()
