@@ -26,3 +26,14 @@ This project showcases my understanding of image classification through the impl
    ```bash
    git clone https://github.com/baras1/CVClassification.git
    cd CVClassification
+
+2. Install the dependencies and the package:
+    ```bash
+    python setup.py install
+
+This will install all the required dependencies listed in the setup.py and make the cvclassify command available in the terminal.
+
+3. Usage:
+    ```bash
+    cvclassify
+This will run the main() function in main.py, which executes your image classification code.
