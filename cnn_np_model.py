@@ -27,34 +27,34 @@ def cross_entropy_derivative(predictions, labels):
 
 # Convolution layer
 def conv2d(X, filters, stride=1, padding=1):
-    # X: input image, filters: convolution filters
+    # X: input batch of images, filters: convolution filters
+    batch_size, n_c, h_prev, w_prev = X.shape
     n_filters, d_filter, f, _ = filters.shape
-    n_c, h_prev, w_prev = X.shape
 
     h = (h_prev - f + 2 * padding) // stride + 1
     w = (w_prev - f + 2 * padding) // stride + 1
-    Z = np.zeros((n_filters, h, w))
+    Z = np.zeros((batch_size, n_filters, h, w))
 
-    X_padded = np.pad(X, ((0, 0), (padding, padding), (padding, padding)), mode='constant')
+    X_padded = np.pad(X, ((0, 0), (0, 0), (padding, padding), (padding, padding)), mode='constant')
 
     for i in range(0, h, stride):
         for j in range(0, w, stride):
-            X_slice = X_padded[:, i:i+f, j:j+f]
+            X_slice = X_padded[:, :, i:i+f, j:j+f]
             for k in range(n_filters):
-                Z[k, i//stride, j//stride] = np.sum(X_slice * filters[k])  # Convolution
+                Z[:, k, i//stride, j//stride] = np.sum(X_slice * filters[k], axis=(1, 2, 3))  # Convolution
 
     return Z
 
 # Max pooling layer
 def maxpool2d(X, f=2, stride=2):
-    n_c, h_prev, w_prev = X.shape
+    batch_size, n_c, h_prev, w_prev = X.shape
     h = (h_prev - f) // stride + 1
     w = (w_prev - f) // stride + 1
-    Z = np.zeros((n_c, h, w))
+    Z = np.zeros((batch_size, n_c, h, w))
 
     for i in range(0, h_prev, stride):
         for j in range(0, w_prev, stride):
-            Z[:, i//stride, j//stride] = np.max(X[:, i:i+f, j:j+f], axis=(1, 2))
+            Z[:, :, i//stride, j//stride] = np.max(X[:, :, i:i+f, j:j+f], axis=(2, 3))
 
     return Z
 

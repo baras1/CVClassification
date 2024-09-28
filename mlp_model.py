@@ -81,7 +81,7 @@ class MLP():
         self.weights1 -= learning_rate * d_w1
         self.bias1 -= learning_rate * d_b1
 
-    def train(self, X, y, epochs=1000, learning_rate=0.001):
+    def train(self, X, y, epochs=100, learning_rate=0.001):
         for epoch in range(epochs):
             # Forward pass
             predictions = self.forward(X)
@@ -92,7 +92,7 @@ class MLP():
             # Backward pass and update
             self.backward(X, y, learning_rate)
             
-            if epoch % 100 == 0:
+            if epoch % 10 == 0:
                 print(f'Epoch {epoch}, Loss: {loss}')
 
     def predict(self, X):

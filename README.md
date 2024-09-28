@@ -19,7 +19,7 @@ This project showcases my understanding of image classification through the impl
 - Matplotlib for visualizing results and learning curves
 - Scikit-learn for data preprocessing and performance evaluation
 
-## Installation
+## Installation and Usage
 
 1. Clone the repository:
 
