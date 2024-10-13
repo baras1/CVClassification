@@ -4,11 +4,11 @@ import numpy as np
 import torch
 from torchvision import transforms
 from PIL import Image
+from tqdm.auto import tqdm  # Import tqdm for progress bar
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 from classifier_manager import ClassifierManager
+from sklearn.metrics import classification_report
 
-# Function to load images and convert to PyTorch tensors for CNN or NumPy arrays for MLP
 def load_images_from_csv(csv_file, image_folder, has_labels=True, use_numpy=False):
     df = pd.read_csv(csv_file)
     label_to_index = {}
@@ -19,7 +19,7 @@ def load_images_from_csv(csv_file, image_folder, has_labels=True, use_numpy=Fals
         label_to_index = {label: idx for idx, label in enumerate(sorted(df.iloc[:, 1].unique()))}
         labels = labels.map(label_to_index)  # Convert string labels to integer indices
     else:
-        filepaths = df.iloc[:, 0]  # For test dataset, only file paths are present
+        filepaths = df.iloc[:, 0]  # For test dataset, only file paths are    
 
     images = []
     labels_list = []
@@ -27,9 +27,16 @@ def load_images_from_csv(csv_file, image_folder, has_labels=True, use_numpy=Fals
     # Choose between PyTorch tensors or NumPy arrays
     transform = transforms.ToTensor() if not use_numpy else None
 
-    for filepath in filepaths:
+    # Add tqdm for the filepaths iteration to display a progress bar
+    for filepath in tqdm(filepaths, desc="Loading images"):
         image_path = os.path.join(image_folder, filepath)
-        img = Image.open(image_path).convert('RGB')  # Convert to RGB format
+        
+        # Attempt to open the image and skip if it raises an error
+        try:
+            img = Image.open(image_path).convert('RGB')  # Convert to RGB format
+        except Exception as e:
+            print(f"Skipping corrupted image: {image_path} - Error: {e}")
+            continue
         
         if use_numpy:
             img_np = np.array(img).astype(np.float32) / 255.0  # Normalize to [0, 1]
@@ -51,10 +58,10 @@ def load_images_from_csv(csv_file, image_folder, has_labels=True, use_numpy=Fals
 
     return images, labels, len(label_to_index)
 
-
 def main():
     print("Running the classification model...")
     model_type = 'cnn'  # Options: 'cnn', 'mlp', 'cnn_numpy'
+    dataset_type = 'catdog' #Options: 'butterflies', 'catdog', 'emotion'
 
     # Choose whether to save and/or load models
     save_model = True  # Set to True if you want to save the model after training
@@ -62,11 +69,11 @@ def main():
 
     # Load data
     use_numpy = model_type != 'cnn'
-    train_images, train_labels, num_classes = load_images_from_csv('butterflies/Training_set.csv', 'butterflies/train', has_labels=True, use_numpy=use_numpy)
+    train_images, train_labels, num_classes = load_images_from_csv(f'{dataset_type}/data_set.csv', f'{dataset_type}/data', has_labels=True, use_numpy=use_numpy)
     train_images, val_images, train_labels, val_labels = train_test_split(train_images, train_labels, random_state=42, test_size=0.25)
     print("Loaded the images")
 
-    model_path = f'models/{model_type}_model'
+    model_path = f'models/{dataset_type}_{model_type}_model'
 
     if model_type == 'cnn_numpy':
         input_shape = train_images.shape[1:]  # Shape of a single image
@@ -89,7 +96,7 @@ def main():
         classifier.classifier.predict_with_visualization(val_images_flat, val_labels)
 
     elif model_type == 'cnn':
-        classifier = ClassifierManager(model_type='cnn', save_model=save_model, load_model=load_model, num_classes=num_classes)
+        classifier = ClassifierManager(model_type='cnn', save_model=save_model, load_model=load_model, num_classes=num_classes, num_epochs = 30)
         print("Begin Fitting")
         classifier.fit(train_images, train_labels, model_path)
         print("Finished Fitting")

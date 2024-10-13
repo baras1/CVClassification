@@ -1,4 +1,6 @@
 __pycache__/
 butterflies/
+catdog/
+emotion/
 *.pyc
 *.log

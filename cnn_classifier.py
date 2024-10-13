@@ -11,18 +11,21 @@ class CNNModel(nn.Module):
         super(CNNModel, self).__init__()
         self.conv1 = nn.Conv2d(3, 16, 3, 1, 1)
         self.conv2 = nn.Conv2d(16, 32, 3, 1, 1)
-        self.pool = nn.MaxPool2d(2, 2)
+        self.conv3 = nn.Conv2d(32, 64, 3, 1, 1)
+        # Adaptive pooling to (8, 8) to keep spatial information while handling various input sizes
+        self.pool1 = nn.AdaptiveAvgPool2d((8, 8))
+        self.pool2 = nn.AdaptiveAvgPool2d((4, 4))
         self.relu = nn.ReLU()
 
-        # Define fully connected layers (without input size, we'll compute it dynamically)
+        # Define fully connected layers with dynamically set input size
         self.fc1 = None  # We'll initialize this later once we know the size
-        self.fc2 = nn.Linear(128, num_classes)
+        self.fc2 = nn.Linear(2048, num_classes)  # (32 * 8 * 8) input to fc2
 
     def forward(self, x):
-        x = self.pool(self.relu(self.conv1(x)))
-        x = self.pool(self.relu(self.conv2(x)))
+        x = self.pool1(self.relu(self.conv1(x)))
+        x = self.pool1(self.relu(self.conv2(x)))
+        x = self.pool2(self.relu(self.conv3(x)))
 
-        # If the fully connected layer isn't initialized, compute and set it
         if self.fc1 is None:
             self._set_fc1_layer(x)
 
@@ -32,18 +35,13 @@ class CNNModel(nn.Module):
         return x
 
     def _set_fc1_layer(self, x):
-        """
-        Dynamically initialize the first fully connected layer based on the input size.
-        This method sets self.fc1.
-        """
-        num_features = x.size(1) * x.size(2) * x.size(3)  # Compute the flattened size
-        self.fc1 = nn.Linear(num_features, 128).to(x.device)  # Now we can initialize fc1
+        num_features = x.size(1) * x.size(2) * x.size(3)
+        self.fc1 = nn.Linear(num_features, 2048).to(x.device)  # Using output size of (8, 8)
 
 
 # CNN Classifier
 class CNNClassifier:
     def __init__(self, num_classes, lr=0.001, batch_size=32, num_epochs=7):
-        # Check if a GPU is available and use it, otherwise use the CPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         self.model = CNNModel(num_classes=num_classes).to(self.device)
@@ -86,16 +84,9 @@ class CNNClassifier:
         return probabilities.cpu().numpy()
 
     def predict_with_visualization(self, X, y=None, num_samples=10):
-        """
-        Predict and visualize a few samples from the dataset.
-        X: Input tensor of images
-        y: Actual labels (optional)
-        num_samples: Number of samples to visualize
-        """
         self.model.eval()
         X = X.to(self.device)
 
-        # Select random samples to visualize
         indices = random.sample(range(X.size(0)), num_samples)
         selected_images = X[indices]
 
@@ -109,12 +100,11 @@ class CNNClassifier:
         if y is not None:
             actual_labels = y[indices].cpu().numpy()
 
-        # Plot the images with their predictions
-        fig, axes = plt.subplots(2, 5, figsize=(15, 6))  # Create a 2x5 grid of subplots
+        fig, axes = plt.subplots(2, 5, figsize=(15, 6))
         axes = axes.flatten()
 
         for i, idx in enumerate(indices):
-            image = selected_images[i].permute(1, 2, 0).numpy()  # Change shape from (C, H, W) to (H, W, C)
+            image = selected_images[i].permute(1, 2, 0).numpy()
             axes[i].imshow(image)
             if y is not None:
                 axes[i].set_title(f"Pred: {preds[i]}, Actual: {actual_labels[i]}")
